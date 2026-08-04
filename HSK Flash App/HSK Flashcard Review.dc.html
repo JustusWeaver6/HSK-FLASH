@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/modernist-b891bd2f-bd25-4c72-95c3-b2cc0b970123/styles.css">
+  <script src="_ds/modernist-b891bd2f-bd25-4c72-95c3-b2cc0b970123/_ds_bundle.js"></script>
+  <style>
+    body { margin: 0; background: var(--color-neutral-200); }
+    .flip-face { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+    .prog-scroll::-webkit-scrollbar { display: none; }
+    @keyframes popIn { from { opacity: 0; transform: scale(.92); } to { opacity: 1; transform: scale(1); } }
+    @keyframes flameFlicker { 0%, 100% { transform: scale(1) rotate(0deg); } 50% { transform: scale(1.08) rotate(-2deg); } }
+  </style>
+</helmet>
+<div style="min-height:100vh; display:flex; align-items:center; justify-content:center; padding:40px;">
+<x-import component-from-global-scope="AndroidDevice" from="./android-frame.jsx" title="HSK Flash" hint-size="412px,915px">
+
+<div style="display:flex; flex-direction:column; height:100%; background:var(--color-bg); font-family:var(--font-body); color:var(--color-text);">
+
+  <sc-if value="{{ isReviewScreen }}" hint-placeholder-val="{{ true }}">
+  <div style="display:flex; flex-direction:column; flex:1; min-height:0;">
+
+    <sc-if value="{{ isSetup }}" hint-placeholder-val="{{ true }}">
+    <div style="flex:1; display:flex; flex-direction:column; padding:20px 20px 20px; min-height:0; overflow-y:auto;" class="prog-scroll">
+      <div style="border:2px solid var(--color-divider); margin-bottom:24px;">
+        <div style="padding:14px 10px; text-align:center;">
+          <div style="font:700 26px/1 var(--font-heading); color:var(--color-accent-700);">{{ dueCount }}</div>
+          <div style="font:11px var(--font-body); color:var(--color-neutral-700); margin-top:6px; letter-spacing:.03em; text-transform:uppercase;">Due for review</div>
+        </div>
+      </div>
+
+      <div style="font:600 12px/1 var(--font-heading); letter-spacing:.06em; text-transform:uppercase; color:var(--color-neutral-700); margin-bottom:10px;">Stack size</div>
+      <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-bottom:24px;">
+        <sc-for list="{{ sizeOptions }}" as="opt" hint-placeholder-count="6">
+          <button style="padding:14px 0; border:2px solid {{ opt.borderColor }}; background:{{ opt.bg }}; color:{{ opt.color }}; font:700 16px/1 var(--font-heading); cursor:pointer; transition:transform .12s ease;" style-active="transform:scale(.94);" onClick="{{ opt.onClick }}">{{ opt.label }}</button>
+        </sc-for>
+      </div>
+
+      <div style="margin-bottom:24px;">
+        <div style="font:600 12px/1 var(--font-heading); letter-spacing:.06em; text-transform:uppercase; color:var(--color-neutral-700); margin-bottom:10px;">Custom size</div>
+        <input class="input" type="number" min="1" max="{{ maxStackSize }}" placeholder="Enter a number of cards" value="{{ customSizeInput }}" onChange="{{ handleCustomSizeChange }}" style="width:100%; box-sizing:border-box;">
+      </div>
+
+      <sc-if value="{{ emptyStackWarning }}" hint-placeholder-val="{{ false }}">
+        <div style="font:13px/1.5 var(--font-body); color:var(--color-accent-700); text-align:center; margin-bottom:12px;">Nothing to study right now — raise your daily limits in Settings, or check back once more reviews are due.</div>
+      </sc-if>
+
+      <button class="btn btn-primary" onClick="{{ startStack }}" style="margin-top:auto; width:50%; margin-left:auto; margin-right:auto; justify-content:center; text-align:center; border-radius:10px; transition:transform .12s ease;" style-active="transform:scale(.95);">Start</button>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isSession }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex; flex-direction:column; flex:1; min-height:0;">
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:14px 20px 10px;">
+        <button style="background:none; border:none; padding:6px; margin:-6px; cursor:pointer; color:var(--color-text); display:flex;" onClick="{{ handleClose }}" aria-label="Close">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+        <div style="font:600 13px/1 var(--font-heading); letter-spacing:.04em; text-transform:uppercase; color:var(--color-neutral-700);">{{ currentCard.tagLabel }}</div>
+        <div style="font:600 13px/1 var(--font-heading); color:var(--color-neutral-700); min-width:36px; text-align:right;">{{ progressLabel }}</div>
+      </div>
+
+      <div style="height:2px; background:var(--color-neutral-300); margin:0 20px 4px;">
+        <div style="height:100%; background:var(--color-accent); transition:width .3s ease; width: {{ progressPct }}%;"></div>
+      </div>
+
+      <div style="flex:1; display:flex; flex-direction:column; padding:8px 20px 20px; min-height:0;">
+
+        <div style="flex:1; min-height:0; perspective:1400px; display:flex; align-items:stretch; justify-content:center; margin:8px 0 20px;" onClick="{{ handleFlip }}">
+          <div style="position:relative; width:100%; transform-style:preserve-3d; transition:transform {{ flipDuration }} cubic-bezier(.4,.2,.2,1); transform: {{ flipTransform }}; cursor:pointer;" style-active="filter:brightness(.97);">
+
+            <div class="flip-face" style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; border:2px solid var(--color-divider); background:var(--color-neutral-100); padding:24px;">
+              <div style="font:11px/1 var(--font-body); letter-spacing:.08em; text-transform:uppercase; color:var(--color-neutral-700); position:absolute; top:16px; left:20px;">{{ currentCard.tagLabel }} &middot; {{ currentCard.pos }}</div>
+              <div style="font:700 92px/1 var(--font-heading); letter-spacing:-.01em;">{{ currentCard.simplified }}</div>
+              <sc-if value="{{ showFrontPinyin }}" hint-placeholder-val="{{ false }}">
+                <div style="font:20px/1 var(--font-body); color:var(--color-accent-700);">{{ currentCard.pinyin }}</div>
+              </sc-if>
+              <div style="position:absolute; bottom:18px; font:12px/1 var(--font-body); color:var(--color-neutral-700); letter-spacing:.03em;">TAP TO REVEAL</div>
+            </div>
+
+            <div class="flip-face" style="position:absolute; inset:0; display:flex; flex-direction:column; border:2px solid var(--color-divider); background:var(--color-neutral-100); padding:22px 22px 18px; transform:rotateY(180deg); overflow:hidden;">
+              <div style="display:flex; align-items:baseline; justify-content:space-between;">
+                <div style="font:700 44px/1 var(--font-heading);">{{ currentCard.simplified }}</div>
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <sc-if value="{{ audioAutoplayOn }}" hint-placeholder-val="{{ false }}">
+                    <span style="font:600 10px/1 var(--font-heading); letter-spacing:.04em; text-transform:uppercase; color:var(--color-accent-700);">Auto</span>
+                  </sc-if>
+                  <button style="background:none; border:1px solid var(--color-divider); padding:8px; cursor:pointer; color:var(--color-text); display:flex;" onClick="{{ handlePlayAudio }}" aria-label="Play audio">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 010 7"/></svg>
+                  </button>
+                </div>
+              </div>
+              <div style="font:20px/1.2 var(--font-body); color:var(--color-accent-700); margin-top:6px;">{{ currentCard.pinyin }}</div>
+              <div style="font:600 19px/1.3 var(--font-heading); margin-top:14px;">{{ currentCard.english }}</div>
+              <sc-if value="{{ currentCard.hasExample }}" hint-placeholder-val="{{ false }}">
+                <div style="height:2px; background:var(--color-divider); margin:16px 0;"></div>
+                <div style="font:17px/1.5 var(--font-body);">{{ currentCard.exampleChinese }}</div>
+                <div style="font:14px/1.5 var(--font-body); color:var(--color-neutral-700); margin-top:4px;">{{ currentCard.exampleEnglish }}</div>
+              </sc-if>
+            </div>
+
+          </div>
+        </div>
+
+        <sc-if value="{{ revealedDetailed }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex; gap:8px;">
+            <button style="flex:1; display:flex; flex-direction:column; align-items:flex-start; gap:4px; padding:12px 10px; border:2px solid var(--color-neutral-900); background:var(--color-neutral-900); color:var(--color-bg); cursor:pointer; transition:transform .12s ease;" style-active="transform:scale(.95);" onClick="{{ gradeDidnt }}">
+              <span style="font:600 13px/1 var(--font-heading);">Didn't know</span>
+              <span style="font:11px/1 var(--font-body); opacity:.7;">resets progress</span>
+            </button>
+            <button style="flex:1; display:flex; flex-direction:column; align-items:flex-start; gap:4px; padding:12px 10px; border:2px solid var(--color-neutral-500); background:var(--color-neutral-500); color:var(--color-bg); cursor:pointer; transition:transform .12s ease;" style-active="transform:scale(.95);" onClick="{{ gradeBad }}">
+              <span style="font:600 13px/1 var(--font-heading);">Bad</span>
+              <span style="font:11px/1 var(--font-body); opacity:.85;">review soon</span>
+            </button>
+            <button style="flex:1; display:flex; flex-direction:column; align-items:flex-start; gap:4px; padding:12px 10px; border:2px solid var(--color-neutral-400); background:var(--color-neutral-100); color:var(--color-text); cursor:pointer; transition:transform .12s ease;" style-active="transform:scale(.95);" onClick="{{ gradeMeh }}">
+              <span style="font:600 13px/1 var(--font-heading);">Meh</span>
+              <span style="font:11px/1 var(--font-body); color:var(--color-neutral-700);">moderate</span>
+            </button>
+            <button style="flex:1; display:flex; flex-direction:column; align-items:flex-start; gap:4px; padding:12px 10px; border:2px solid var(--color-accent); background:var(--color-accent); color:#fff; cursor:pointer; transition:transform .12s ease;" style-active="transform:scale(.95);" onClick="{{ gradeGood }}">
+              <span style="font:600 13px/1 var(--font-heading);">Good</span>
+              <span style="font:11px/1 var(--font-body); opacity:.9;">longer interval</span>
+            </button>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ revealedSimple }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex; gap:8px;">
+            <button style="flex:1; padding:16px 10px; text-align:left; border:2px solid var(--color-neutral-900); background:var(--color-neutral-900); color:var(--color-bg); cursor:pointer; font:600 15px/1 var(--font-heading); transition:transform .12s ease;" style-active="transform:scale(.96);" onClick="{{ gradeBad }}">Missed it</button>
+            <button style="flex:1; padding:16px 10px; text-align:left; border:2px solid var(--color-accent); background:var(--color-accent); color:#fff; cursor:pointer; font:600 15px/1 var(--font-heading); transition:transform .12s ease;" style-active="transform:scale(.96);" onClick="{{ gradeGood }}">Got it</button>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ notRevealed }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex; align-items:center; justify-content:center; gap:10px; padding:12px 0 2px; color:var(--color-neutral-700); font:13px var(--font-body);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+            Tap the card to see the answer
+          </div>
+        </sc-if>
+
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isSessionDone }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:24px; padding:32px; text-align:center; animation:popIn .4s cubic-bezier(.2,.8,.3,1.2);">
+        <div style="width:56px; height:56px; border:2px solid var(--color-accent); display:flex; align-items:center; justify-content:center;">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+        </div>
+        <div style="font:600 34px/1.1 var(--font-heading); letter-spacing:-.01em;">{{ encouragement }}</div>
+        <div style="font:15px/1.5 var(--font-body); color:var(--color-neutral-700); max-width:280px;">You reviewed {{ totalCards }} cards. Words you missed will come back into the next stack.</div>
+        <div style="display:flex; gap:0; width:100%; max-width:280px; border:2px solid var(--color-divider);">
+          <div style="flex:1; padding:16px 12px; text-align:center; border-right:2px solid var(--color-divider);">
+            <div style="font:700 24px/1 var(--font-heading); color:var(--color-accent-700);">{{ correctCount }}</div>
+            <div style="font:12px var(--font-body); color:var(--color-neutral-700); margin-top:4px;">Good / Meh</div>
+          </div>
+          <div style="flex:1; padding:16px 12px; text-align:center;">
+            <div style="font:700 24px/1 var(--font-heading); color:var(--color-neutral-900);">{{ missedCount }}</div>
+            <div style="font:12px var(--font-body); color:var(--color-neutral-700); margin-top:4px;">Bad / Didn't know</div>
+          </div>
+        </div>
+        <button class="btn btn-primary" onClick="{{ backToSetup }}" style="margin-top:8px;">Study again</button>
+      </div>
+    </sc-if>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isLibraryScreen }}" hint-placeholder-val="{{ false }}">
+  <div style="display:flex; flex-direction:column; flex:1; min-height:0;">
+    <div style="padding:18px 20px 12px;">
+      <div style="font:700 30px/1.1 var(--font-heading); letter-spacing:-.01em; margin-bottom:2px;">Vocabulary</div>
+      <div style="font:13px var(--font-body); color:var(--color-neutral-700); margin-bottom:14px;">{{ libraryCount }} of {{ totalVocab }} words &middot; HSK 1&ndash;4</div>
+      <input class="input" type="text" placeholder="Search Chinese, pinyin or English" value="{{ query }}" onChange="{{ handleSearchChange }}" style="width:100%; box-sizing:border-box; margin-bottom:12px;">
+      <div style="display:flex; gap:6px;">
+        <sc-for list="{{ levelChips }}" as="chip" hint-placeholder-count="5">
+          <button style="padding:7px 12px; border:2px solid {{ chip.borderColor }}; background:{{ chip.bg }}; color:{{ chip.color }}; font:600 12px/1 var(--font-heading); cursor:pointer;" onClick="{{ chip.onClick }}">{{ chip.label }}</button>
+        </sc-for>
+      </div>
+    </div>
+    <div class="prog-scroll" style="flex:1; min-height:0; overflow-y:auto; padding:0 20px 20px; display:flex; flex-direction:column;">
+      <sc-for list="{{ filteredWords }}" as="w" hint-placeholder-count="10">
+        <div style="display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--color-divider);">
+          <div style="font:700 26px/1 var(--font-heading); min-width:52px;">{{ w.simplified }}</div>
+          <div style="flex:1; min-width:0;">
+            <div style="font:14px/1.2 var(--font-body); color:var(--color-accent-700);">{{ w.pinyin }}</div>
+            <div style="font:13px/1.3 var(--font-body); color:var(--color-text); margin-top:2px;">{{ w.english }}</div>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:flex-end; gap:5px;">
+            <span style="font:600 10px/1 var(--font-heading); letter-spacing:.04em; color:var(--color-neutral-700);">HSK {{ w.hskLevel }}</span>
+            <span style="font:600 10px/1 var(--font-heading); letter-spacing:.03em; text-transform:uppercase; padding:3px 6px; border:1px solid {{ w.stateBorder }}; background:{{ w.stateBg }}; color:{{ w.stateColor }};">{{ w.state }}</span>
+          </div>
+        </div>
+      </sc-for>
+      <sc-if value="{{ noResults }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:40px 0; text-align:center; color:var(--color-neutral-700); font:14px var(--font-body);">No words match your search.</div>
+      </sc-if>
+      <sc-if value="{{ libraryTruncated }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:16px 0; text-align:center; color:var(--color-neutral-700); font:12px var(--font-body);">Showing the first 150 &middot; search or pick an HSK level to narrow it down</div>
+      </sc-if>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isProgressScreen }}" hint-placeholder-val="{{ false }}">
+  <div class="prog-scroll" style="flex:1; min-height:0; overflow-y:auto; padding:18px 20px 24px;">
+
+    <div style="font:700 30px/1.1 var(--font-heading); letter-spacing:-.01em; margin-bottom:18px;">Progress</div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; border:2px solid var(--color-divider); margin-bottom:20px;">
+      <div style="padding:14px 10px; border-right:2px solid var(--color-divider); text-align:center;">
+        <div style="font:700 26px/1 var(--font-heading); color:var(--color-accent-700);">{{ dueToday }}</div>
+        <div style="font:11px var(--font-body); color:var(--color-neutral-700); margin-top:6px; letter-spacing:.03em; text-transform:uppercase;">Due today</div>
+      </div>
+      <div style="padding:14px 10px; border-right:2px solid var(--color-divider); text-align:center;">
+        <div style="display:flex; align-items:center; justify-content:center; gap:4px;">
+          <sc-if value="{{ hasStreak }}" hint-placeholder-val="{{ false }}">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="var(--color-accent)" stroke="none" style="animation:flameFlicker 1.6s ease-in-out infinite;"><path d="M12 2c1 4-4 5-4 9a4 4 0 008 0c0-1.5-1-2.5-1-4 1.5 1 3 3 3 6a6 6 0 01-12 0c0-5 3-7 4-11 1 1 1.5 2.5 2 3z"/></svg>
+          </sc-if>
+          <div style="font:700 26px/1 var(--font-heading);">{{ currentStreak }}</div>
+        </div>
+        <div style="font:11px var(--font-body); color:var(--color-neutral-700); margin-top:6px; letter-spacing:.03em; text-transform:uppercase;">Day streak</div>
+      </div>
+      <div style="padding:14px 10px; text-align:center;">
+        <div style="font:700 26px/1 var(--font-heading);">{{ accuracyPct }}%</div>
+        <div style="font:11px var(--font-body); color:var(--color-neutral-700); margin-top:6px; letter-spacing:.03em; text-transform:uppercase;">Accuracy</div>
+      </div>
+    </div>
+
+    <div style="font:600 12px/1 var(--font-heading); letter-spacing:.06em; text-transform:uppercase; color:var(--color-neutral-700); margin-bottom:10px;">Word states</div>
+    <div style="display:flex; gap:8px; margin-bottom:22px;">
+      <div style="flex:1; border:2px solid var(--color-divider); padding:10px 8px;">
+        <div style="font:700 18px/1 var(--font-heading);">{{ learningCount }}</div>
+        <div style="font:11px var(--font-body); color:var(--color-neutral-700); margin-top:4px;">Learning</div>
+      </div>
+      <div style="flex:1; border:2px solid var(--color-divider); padding:10px 8px;">
+        <div style="font:700 18px/1 var(--font-heading);">{{ reviewingCount }}</div>
+        <div style="font:11px var(--font-body); color:var(--color-neutral-700); margin-top:4px;">Reviewing</div>
+      </div>
+      <div style="flex:1; border:2px solid var(--color-accent); padding:10px 8px;">
+        <div style="font:700 18px/1 var(--font-heading); color:var(--color-accent-700);">{{ masteredCount }}</div>
+        <div style="font:11px var(--font-body); color:var(--color-neutral-700); margin-top:4px;">Mastered</div>
+      </div>
+    </div>
+
+    <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px;">
+      <div style="font:600 12px/1 var(--font-heading); letter-spacing:.06em; text-transform:uppercase; color:var(--color-neutral-700);">HSK level mastery</div>
+      <div style="font:700 13px/1 var(--font-heading); color:var(--color-accent-700);">{{ overallMasteryPct }}% complete</div>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:22px;">
+      <sc-for list="{{ levelStats }}" as="lvl" hint-placeholder-count="4">
+        <div>
+          <div style="display:flex; justify-content:space-between; font:13px var(--font-body); margin-bottom:5px;">
+            <span style="font:600 13px/1 var(--font-heading);">{{ lvl.label }}</span>
+            <span style="color:var(--color-neutral-700);">{{ lvl.mastered }}/{{ lvl.total }} ({{ lvl.pct }}%)</span>
+          </div>
+          <div style="height:6px; background:var(--color-neutral-300);">
+            <div style="height:100%; background:#2e7d32; width: {{ lvl.pct }}%; transition:width .5s ease;"></div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isSettingsScreen }}" hint-placeholder-val="{{ false }}">
+  <div class="prog-scroll" style="flex:1; min-height:0; overflow-y:auto; padding:18px 20px 24px;">
+    <div style="font:700 30px/1.1 var(--font-heading); letter-spacing:-.01em; margin-bottom:18px;">Settings</div>
+
+    <div style="font:600 12px/1 var(--font-heading); letter-spacing:.06em; text-transform:uppercase; color:var(--color-neutral-700); margin-bottom:6px;">Daily limits</div>
+    <div style="margin-bottom:20px;">
+      <sc-for list="{{ numberSettings }}" as="item" hint-placeholder-count="2">
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 0; border-bottom:1px solid var(--color-divider);">
+          <div style="font:600 14px/1.3 var(--font-heading);">{{ item.label }}</div>
+          <div style="display:flex; align-items:center; border:2px solid var(--color-divider);">
+            <button style="width:36px; height:36px; background:none; border:none; border-right:2px solid var(--color-divider); cursor:pointer; font:700 16px/1 var(--font-heading); color:var(--color-text);" onClick="{{ item.onDec }}">&ndash;</button>
+            <div style="width:48px; text-align:center; font:700 15px/1 var(--font-heading);">{{ item.value }}</div>
+            <button style="width:36px; height:36px; background:none; border:none; border-left:2px solid var(--color-divider); cursor:pointer; font:700 16px/1 var(--font-heading); color:var(--color-text);" onClick="{{ item.onInc }}">+</button>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="font:600 12px/1 var(--font-heading); letter-spacing:.06em; text-transform:uppercase; color:var(--color-neutral-700); margin-bottom:6px;">Study feel</div>
+    <div>
+      <sc-for list="{{ settingsRows }}" as="row" hint-placeholder-count="6">
+        <div style="padding:14px 0; border-bottom:1px solid var(--color-divider);">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px;">
+            <div style="min-width:0;">
+              <div style="font:600 14px/1.3 var(--font-heading);">{{ row.label }}</div>
+              <div style="font:12px/1.4 var(--font-body); color:var(--color-neutral-700); margin-top:2px;">{{ row.description }}</div>
+            </div>
+            <div style="display:flex; border:2px solid var(--color-divider); flex-shrink:0;">
+              <sc-for list="{{ row.options }}" as="opt" hint-placeholder-count="2">
+                <button style="padding:8px 10px; border:none; background:{{ opt.bg }}; color:{{ opt.color }}; font:600 12px/1 var(--font-heading); cursor:pointer; white-space:nowrap;" onClick="{{ opt.onClick }}">{{ opt.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+  </sc-if>
+
+  <div style="display:flex; border-top:2px solid var(--color-divider); flex-shrink:0;">
+    <button style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; padding:10px 0 8px; background:none; border:none; cursor:pointer; color: {{ reviewTabColor }}; transition:transform .12s ease;" style-active="transform:scale(.9);" onClick="{{ goToReview }}">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="14" rx="0"/><path d="M3 9h18"/></svg>
+      <span style="font:600 11px/1 var(--font-heading);">Review</span>
+    </button>
+    <button style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; padding:10px 0 8px; background:none; border:none; cursor:pointer; color: {{ progressTabColor }}; transition:transform .12s ease;" style-active="transform:scale(.9);" onClick="{{ goToProgress }}">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M12 20V4M20 20v-7"/></svg>
+      <span style="font:600 11px/1 var(--font-heading);">Progress</span>
+    </button>
+    <button style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; padding:10px 0 8px; background:none; border:none; cursor:pointer; color: {{ libraryTabColor }}; transition:transform .12s ease;" style-active="transform:scale(.9);" onClick="{{ goToLibrary }}">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20M4 4.5A2.5 2.5 0 016.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15z"/></svg>
+      <span style="font:600 11px/1 var(--font-heading);">Library</span>
+    </button>
+    <button style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; padding:10px 0 8px; background:none; border:none; cursor:pointer; color: {{ settingsTabColor }}; transition:transform .12s ease;" style-active="transform:scale(.9);" onClick="{{ goToSettings }}">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      <span style="font:600 11px/1 var(--font-heading);">Settings</span>
+    </button>
+  </div>
+
+</div>
+</x-import>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;gradingStyle&quot;: {
+    &quot;editor&quot;: &quot;enum&quot;,
+    &quot;options&quot;: [&quot;detailed&quot;, &quot;simple&quot;],
+    &quot;default&quot;: &quot;detailed&quot;,
+    &quot;tsType&quot;: &quot;'detailed' | 'simple'&quot;,
+    &quot;section&quot;: &quot;Study feel&quot;
+  },
+  &quot;frontHint&quot;: {
+    &quot;editor&quot;: &quot;enum&quot;,
+    &quot;options&quot;: [&quot;hidden&quot;, &quot;pinyin&quot;],
+    &quot;default&quot;: &quot;hidden&quot;,
+    &quot;tsType&quot;: &quot;'hidden' | 'pinyin'&quot;,
+    &quot;section&quot;: &quot;Study feel&quot;
+  },
+  &quot;stackOrder&quot;: {
+    &quot;editor&quot;: &quot;enum&quot;,
+    &quot;options&quot;: [&quot;interleaved&quot;, &quot;reviewsFirst&quot;],
+    &quot;default&quot;: &quot;interleaved&quot;,
+    &quot;tsType&quot;: &quot;'interleaved' | 'reviewsFirst'&quot;,
+    &quot;section&quot;: &quot;Study feel&quot;
+  }
+}">
+const EXAMPLES = {
+  '学习': ['我每天学习中文。', 'I study Chinese every day.'],
+  '朋友': ['他是我的好朋友。', 'He is my good friend.'],
+  '喜欢': ['我喜欢喝茶。', 'I like drinking tea.'],
+  '时间': ['你有时间吗？', 'Do you have time?'],
+  '工作': ['她在银行工作。', 'She works at a bank.'],
+  '认识': ['很高兴认识你。', 'Nice to meet you.'],
+  '觉得': ['我觉得这个很有意思。', 'I think this is interesting.'],
+  '旅游': ['暑假我们去云南旅游。', 'We are traveling to Yunnan this summer.'],
+  '经验': ['他有很多工作经验。', 'He has a lot of work experience.'],
+  '健康': ['运动对健康很重要。', 'Exercise is important for health.'],
+  '决定': ['我决定明天开始学习。', 'I decided to start studying tomorrow.'],
+  '环境': ['我们要保护环境。', 'We need to protect the environment.']
+};
+
+let VOCAB_BANK = [];
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function applySRS(word, rating, virtualDay) {
+  word.reviewCount++;
+  if (rating === 'didnt') {
+    word.incorrectCount = (word.incorrectCount || 0) + 1;
+    word.interval = 0;
+    word.masteryScore = Math.max(0, word.masteryScore - 25);
+    if (word.state === 'mastered') word.state = 'reviewing';
+    else if (word.state === 'reviewing') word.state = 'learning';
+    else word.state = 'learning';
+  } else if (rating === 'bad') {
+    word.incorrectCount = (word.incorrectCount || 0) + 1;
+    word.interval = Math.max(1, Math.round(word.interval * 1.2) || 1);
+    word.masteryScore = Math.max(0, word.masteryScore + 4);
+    if (word.state === 'mastered') word.state = 'reviewing';
+    else if (word.state === 'new') word.state = 'learning';
+  } else if (rating === 'meh') {
+    word.correctCount = (word.correctCount || 0) + 1;
+    word.interval = Math.round(word.interval * 1.8) + 1;
+    word.masteryScore = Math.min(100, word.masteryScore + 12);
+    if (word.state === 'new' || word.state === 'learning') word.state = word.reviewCount >= 2 ? 'reviewing' : 'learning';
+  } else if (rating === 'good') {
+    word.correctCount = (word.correctCount || 0) + 1;
+    word.interval = Math.round(word.interval * 2.4) + 2;
+    word.masteryScore = Math.min(100, word.masteryScore + 20);
+    if (word.state === 'new' || word.state === 'learning') word.state = 'reviewing';
+    if (word.state === 'reviewing' && word.masteryScore >= 85 && word.interval >= 21) word.state = 'mastered';
+  }
+  word.nextReviewDay = virtualDay + word.interval;
+}
+
+class Component extends DCLogic {
+  state = {
+    screen: 'review', stackSize: 10, stack: null, index: 0, revealed: false,
+    correct: 0, missed: 0, sessionDone: false, virtualDay: 0,
+    cumulativeCorrect: 0, cumulativeMissed: 0, streak: 0,
+    query: '', levelFilter: 'all', vocabLoaded: false, customSizeInput: '', emptyStackWarning: false,
+    settings: {
+      dailyNewLimit: 20, maxReviewsPerDay: 60,
+      showPinyinFront: false, gradingStyle: 'detailed', reviewsBeforeNew: false,
+      shuffleNewWords: false, audioAutoplay: false, flipSpeed: 'normal'
+    }
+  };
+
+  componentDidMount() {
+    this.setState(s => ({
+      settings: {
+        ...s.settings,
+        showPinyinFront: (this.props.frontHint ?? 'hidden') === 'pinyin',
+        gradingStyle: this.props.gradingStyle ?? 'detailed',
+        reviewsBeforeNew: (this.props.stackOrder ?? 'interleaved') === 'reviewsFirst'
+      }
+    }));
+    import('./hsk-vocab.js').then(m => {
+      VOCAB_BANK = m.HSK_VOCAB.map((w, i) => ({
+        ...w,
+        id: i,
+        state: 'new',
+        masteryScore: 0,
+        reviewCount: 0,
+        correctCount: 0,
+        incorrectCount: 0,
+        interval: 0,
+        nextReviewDay: 0,
+        exampleChinese: EXAMPLES[w.simplified] ? EXAMPLES[w.simplified][0] : null,
+        exampleEnglish: EXAMPLES[w.simplified] ? EXAMPLES[w.simplified][1] : null
+      }));
+      this.forceUpdate();
+    });
+  }
+
+  handleFlip = () => {
+    if (!this.state.sessionDone) this.setState(s => ({ revealed: !s.revealed }));
+  };
+
+  handlePlayAudio = (e) => { e.stopPropagation(); };
+  handleClose = () => this.backToSetup();
+  goToReview = () => this.setState({ screen: 'review' });
+  goToProgress = () => this.setState({ screen: 'progress' });
+  goToLibrary = () => this.setState({ screen: 'library' });
+  handleSearchChange = (e) => this.setState({ query: e.target.value });
+  setLevelFilter = (lvl) => this.setState({ levelFilter: lvl });
+  setStackSize = (n) => this.setState({ stackSize: n, customSizeInput: '' });
+  goToSettings = () => this.setState({ screen: 'settings' });
+
+  setSetting = (key, value) => this.setState(s => ({ settings: { ...s.settings, [key]: value } }));
+
+  stepSetting = (key, delta, min, max) => this.setState(s => ({
+    settings: { ...s.settings, [key]: Math.max(min, Math.min(max, s.settings[key] + delta)) }
+  }));
+
+  handleCustomSizeChange = (e) => {
+    const raw = e.target.value;
+    const n = parseInt(raw, 10);
+    const max = VOCAB_BANK.length || 9999;
+    if (raw === '' || isNaN(n)) {
+      this.setState({ customSizeInput: raw });
+    } else {
+      this.setState({ customSizeInput: raw, stackSize: Math.max(1, Math.min(n, max)) });
+    }
+  };
+
+  buildStack = (n) => {
+    const { virtualDay, settings } = this.state;
+    let due = VOCAB_BANK.filter(w => w.state !== 'new' && w.nextReviewDay <= virtualDay);
+    let newOnes = VOCAB_BANK.filter(w => w.state === 'new');
+    // daily caps from Settings bound the pools before any stack-size math happens
+    due = shuffle(due).slice(0, settings.maxReviewsPerDay);
+    newOnes = settings.shuffleNewWords ? shuffle(newOnes) : newOnes;
+    newOnes = newOnes.slice(0, settings.dailyNewLimit);
+    // reserve at least ~30% of the stack for new words when any are available, so a big review
+    // backlog never crowds new vocabulary out entirely
+    const reservedNewSlots = newOnes.length > 0 ? Math.max(1, Math.round(n * 0.3)) : 0;
+    const reviewSlots = n - reservedNewSlots;
+    const selectedDue = due.slice(0, reviewSlots);
+    const newSlots = n - selectedDue.length;
+    const selectedNew = newOnes.slice(0, newSlots);
+    if (selectedDue.length > 0 && selectedNew.length > 0) {
+      return settings.reviewsBeforeNew ? selectedDue.concat(selectedNew) : shuffle(selectedDue.concat(selectedNew));
+    }
+    if (selectedDue.length > 0) return shuffle(selectedDue);
+    return selectedNew;
+  };
+
+  startStack = () => {
+    const stack = this.buildStack(this.state.stackSize);
+    if (stack.length === 0) {
+      this.setState({ emptyStackWarning: true });
+      return;
+    }
+    this.setState({ stack, index: 0, revealed: false, correct: 0, missed: 0, sessionDone: false, emptyStackWarning: false });
+  };
+
+  backToSetup = () => {
+    this.setState({ stack: null, sessionDone: false, index: 0, revealed: false });
+  };
+
+  grade = (rating) => {
+    const { stack, index, virtualDay } = this.state;
+    const word = stack[index];
+    applySRS(word, rating, virtualDay);
+    const isGood = rating === 'good' || rating === 'meh';
+    this.setState(s => {
+      const nextIndex = s.index + 1;
+      const done = nextIndex >= s.stack.length;
+      return {
+        index: done ? s.index : nextIndex,
+        revealed: false,
+        correct: s.correct + (isGood ? 1 : 0),
+        missed: s.missed + (isGood ? 0 : 1),
+        sessionDone: done,
+        virtualDay: done ? s.virtualDay + 1 : s.virtualDay,
+        streak: done ? s.streak + 1 : s.streak,
+        cumulativeCorrect: s.cumulativeCorrect + (isGood ? 1 : 0),
+        cumulativeMissed: s.cumulativeMissed + (isGood ? 0 : 1)
+      };
+    });
+  };
+
+  renderVals() {
+    const {
+      screen, stackSize, stack, index, revealed, correct, missed, sessionDone,
+      virtualDay, cumulativeCorrect, cumulativeMissed, streak, query, levelFilter, customSizeInput, settings, emptyStackWarning
+    } = this.state;
+
+    const dueCount = VOCAB_BANK.filter(w => w.state !== 'new' && w.nextReviewDay <= virtualDay).length;
+    const newAvailable = VOCAB_BANK.filter(w => w.state === 'new').length;
+    const sizeOptions = [5, 10, 15, 20, 25, 30].map(n => ({
+      label: n, onClick: () => this.setStackSize(n),
+      borderColor: n === stackSize ? 'var(--color-accent)' : 'var(--color-divider)',
+      bg: n === stackSize ? 'var(--color-accent)' : 'var(--color-bg)',
+      color: n === stackSize ? '#fff' : 'var(--color-text)'
+    }));
+
+    const gradingStyle = settings.gradingStyle;
+    const flipDurations = { slow: '.7s', normal: '.45s', fast: '.25s' };
+    const flipDuration = flipDurations[settings.flipSpeed] || '.45s';
+
+    const rawCard = stack ? stack[index] : null;
+    const currentCard = rawCard ? { ...rawCard, tagLabel: `HSK ${rawCard.hskLevel}`, hasExample: !!rawCard.exampleChinese } : { simplified: '', pinyin: '', english: '', tagLabel: '', pos: '', hasExample: false };
+
+    const stateStyles = {
+      mastered: { border: 'var(--color-accent)', bg: 'var(--color-accent)', color: '#fff' },
+      reviewing: { border: 'var(--color-neutral-700)', bg: 'var(--color-neutral-700)', color: '#fff' },
+      learning: { border: 'var(--color-neutral-500)', bg: 'var(--color-neutral-100)', color: 'var(--color-neutral-700)' },
+      new: { border: 'var(--color-neutral-300)', bg: 'var(--color-bg)', color: 'var(--color-neutral-700)' }
+    };
+    const q = query.trim().toLowerCase();
+    const allMatches = VOCAB_BANK.filter(w => {
+      const matchesLevel = levelFilter === 'all' || w.hskLevel === levelFilter;
+      const matchesQuery = !q || w.simplified.includes(q) || w.pinyin.toLowerCase().includes(q) || w.english.toLowerCase().includes(q);
+      return matchesLevel && matchesQuery;
+    });
+    const LIBRARY_RENDER_CAP = 150;
+    const libraryTruncated = allMatches.length > LIBRARY_RENDER_CAP;
+    const filteredWords = allMatches.slice(0, LIBRARY_RENDER_CAP).map(w => ({
+      ...w,
+      stateBorder: stateStyles[w.state].border,
+      stateBg: stateStyles[w.state].bg,
+      stateColor: stateStyles[w.state].color
+    }));
+    const levelChips = [1, 2, 3, 4].reduce((acc, lvl) => {
+      acc.push({ label: `HSK ${lvl}`, active: levelFilter === lvl, onClick: () => this.setLevelFilter(lvl) });
+      return acc;
+    }, [{ label: 'All', active: levelFilter === 'all', onClick: () => this.setLevelFilter('all') }])
+      .map(c => ({
+        ...c,
+        borderColor: c.active ? 'var(--color-accent)' : 'var(--color-divider)',
+        bg: c.active ? 'var(--color-accent)' : 'var(--color-bg)',
+        color: c.active ? '#fff' : 'var(--color-text)'
+      }));
+
+    const counts = { new: 0, learning: 0, reviewing: 0, mastered: 0 };
+    const byLevel = {};
+    VOCAB_BANK.forEach(w => {
+      counts[w.state]++;
+      byLevel[w.hskLevel] = byLevel[w.hskLevel] || { total: 0, mastered: 0 };
+      byLevel[w.hskLevel].total++;
+      if (w.state === 'mastered') byLevel[w.hskLevel].mastered++;
+    });
+    const levelStats = Object.keys(byLevel).sort().map(lv => {
+      const d = byLevel[lv];
+      return { label: `HSK ${lv}`, mastered: d.mastered, total: d.total, pct: Math.round((d.mastered / d.total) * 100) };
+    });
+    const overallMasteryPct = VOCAB_BANK.length ? Math.round((counts.mastered / VOCAB_BANK.length) * 100) : 0;
+    const totalGraded = cumulativeCorrect + cumulativeMissed;
+    const accuracyPct = totalGraded === 0 ? 0 : Math.round((cumulativeCorrect / totalGraded) * 100);
+    const stackAccuracy = (correct + missed) === 0 ? 0 : correct / (correct + missed);
+    const encouragement = stackAccuracy >= 0.9 ? 'Excellent work!' : stackAccuracy >= 0.6 ? 'Nice work!' : 'Stack complete';
+
+    return {
+      isReviewScreen: screen === 'review',
+      isProgressScreen: screen === 'progress',
+      isLibraryScreen: screen === 'library',
+      isSetup: screen === 'review' && !(stack && stack.length > 0),
+      isSession: screen === 'review' && !!(stack && stack.length > 0) && !sessionDone,
+      isSessionDone: screen === 'review' && !!(stack && stack.length > 0) && sessionDone,
+      isSettingsScreen: screen === 'settings',
+      reviewTabColor: screen === 'review' ? 'var(--color-accent-700)' : 'var(--color-neutral-700)',
+      progressTabColor: screen === 'progress' ? 'var(--color-accent-700)' : 'var(--color-neutral-700)',
+      libraryTabColor: screen === 'library' ? 'var(--color-accent-700)' : 'var(--color-neutral-700)',
+      settingsTabColor: screen === 'settings' ? 'var(--color-accent-700)' : 'var(--color-neutral-700)',
+      goToReview: this.goToReview,
+      goToProgress: this.goToProgress,
+      goToLibrary: this.goToLibrary,
+      goToSettings: this.goToSettings,
+      numberSettings: [
+        { label: 'New words per day', value: settings.dailyNewLimit, onDec: () => this.stepSetting('dailyNewLimit', -1, 0, 100), onInc: () => this.stepSetting('dailyNewLimit', 1, 0, 100) },
+        { label: 'Max reviews per day', value: settings.maxReviewsPerDay, onDec: () => this.stepSetting('maxReviewsPerDay', -5, 0, 300), onInc: () => this.stepSetting('maxReviewsPerDay', 5, 0, 300) }
+      ],
+      settingsRows: [
+        {
+          label: 'Show pinyin on card front', description: 'Reveal pronunciation before flipping the card',
+          options: [
+            { label: 'Hidden', active: !settings.showPinyinFront, onClick: () => this.setSetting('showPinyinFront', false) },
+            { label: 'Shown', active: settings.showPinyinFront, onClick: () => this.setSetting('showPinyinFront', true) }
+          ]
+        },
+        {
+          label: 'Grading buttons', description: '4-tier Anki-style grading, or a simple right/wrong check',
+          options: [
+            { label: 'Detailed', active: settings.gradingStyle === 'detailed', onClick: () => this.setSetting('gradingStyle', 'detailed') },
+            { label: 'Simple', active: settings.gradingStyle === 'simple', onClick: () => this.setSetting('gradingStyle', 'simple') }
+          ]
+        },
+        {
+          label: 'Stack order', description: 'Put due reviews before new words, or mix them together',
+          options: [
+            { label: 'Interleaved', active: !settings.reviewsBeforeNew, onClick: () => this.setSetting('reviewsBeforeNew', false) },
+            { label: 'Reviews first', active: settings.reviewsBeforeNew, onClick: () => this.setSetting('reviewsBeforeNew', true) }
+          ]
+        },
+        {
+          label: 'Shuffle new words', description: 'Otherwise new words are introduced in frequency order',
+          options: [
+            { label: 'Off', active: !settings.shuffleNewWords, onClick: () => this.setSetting('shuffleNewWords', false) },
+            { label: 'On', active: settings.shuffleNewWords, onClick: () => this.setSetting('shuffleNewWords', true) }
+          ]
+        },
+        {
+          label: 'Audio autoplay', description: 'Play pronunciation automatically when a card flips',
+          options: [
+            { label: 'Off', active: !settings.audioAutoplay, onClick: () => this.setSetting('audioAutoplay', false) },
+            { label: 'On', active: settings.audioAutoplay, onClick: () => this.setSetting('audioAutoplay', true) }
+          ]
+        },
+        {
+          label: 'Flip animation', description: 'How fast cards flip when revealed',
+          options: [
+            { label: 'Slow', active: settings.flipSpeed === 'slow', onClick: () => this.setSetting('flipSpeed', 'slow') },
+            { label: 'Normal', active: settings.flipSpeed === 'normal', onClick: () => this.setSetting('flipSpeed', 'normal') },
+            { label: 'Fast', active: settings.flipSpeed === 'fast', onClick: () => this.setSetting('flipSpeed', 'fast') }
+          ]
+        }
+      ].map(row => ({
+        ...row,
+        options: row.options.map(o => ({
+          ...o,
+          bg: o.active ? 'var(--color-accent)' : 'var(--color-bg)',
+          color: o.active ? '#fff' : 'var(--color-text)'
+        }))
+      })),
+      query,
+      handleSearchChange: this.handleSearchChange,
+      levelChips,
+      filteredWords,
+      noResults: allMatches.length === 0,
+      libraryTruncated,
+      libraryCount: allMatches.length,
+
+      dueCount,
+      newAvailable,
+      emptyStackWarning,
+      sizeOptions,
+      stackSize,
+      customSizeInput,
+      handleCustomSizeChange: this.handleCustomSizeChange,
+      maxStackSize: VOCAB_BANK.length || 1193,
+      startStack: this.startStack,
+      backToSetup: this.backToSetup,
+
+      currentCard,
+      revealed,
+      notRevealed: !revealed,
+      revealedDetailed: revealed && gradingStyle === 'detailed',
+      revealedSimple: revealed && gradingStyle === 'simple',
+      showFrontPinyin: settings.showPinyinFront,
+      audioAutoplayOn: settings.audioAutoplay,
+      flipDuration,
+      flipTransform: revealed ? 'rotateY(180deg)' : 'rotateY(0deg)',
+      progressLabel: stack ? `${Math.min(index + 1, stack.length)}/${stack.length}` : '',
+      progressPct: stack ? Math.round((index / stack.length) * 100) : 0,
+      totalCards: stack ? stack.length : 0,
+      correctCount: correct,
+      missedCount: missed,
+      handleFlip: this.handleFlip,
+      handlePlayAudio: this.handlePlayAudio,
+      handleClose: this.handleClose,
+      grade: this.grade,
+      gradeDidnt: () => this.grade('didnt'),
+      gradeBad: () => this.grade('bad'),
+      gradeMeh: () => this.grade('meh'),
+      gradeGood: () => this.grade('good'),
+
+      totalVocab: VOCAB_BANK.length,
+      levelCount: levelStats.length,
+      dueToday: dueCount,
+      currentStreak: streak,
+      hasStreak: streak > 0,
+      accuracyPct,
+      encouragement,
+      learningCount: counts.learning,
+      reviewingCount: counts.reviewing,
+      masteredCount: counts.mastered,
+      levelStats,
+      overallMasteryPct
+    };
+  }
+}
+
+</script>
+</body>
+</html>
