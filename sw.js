@@ -1,5 +1,5 @@
 // Network-first: always prefer the live file, fall back to cache offline.
-const CACHE = 'hsk-flash-v6';
+const CACHE = 'hsk-flash-v10';
 const ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
